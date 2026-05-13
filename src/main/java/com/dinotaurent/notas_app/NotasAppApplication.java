@@ -8,7 +8,6 @@ public class NotasAppApplication {
 
 	static void main(String[] args) {
 		SpringApplication.run(NotasAppApplication.class, args);
-		IO.println("Hola mundo desde la nueva forma de imprimir en java");
 	}
 
 }

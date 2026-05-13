@@ -1,3 +1,6 @@
 spring:
   application:
     name: notas-app
+
+api:
+  version: ${API_VERSION:v1}
