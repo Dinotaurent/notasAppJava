@@ -1,0 +1,95 @@
+# ============================================
+# ConfigMap - Notas App
+# ============================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notas-app-config
+  namespace: dev
+  labels:
+    app: notas-app
+    env: dev
+data:
+  APP_ENV: "development"
+  SERVER_PORT: "8080"
+---
+# ============================================
+# Deployment - Notas App
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notas-app
+  namespace: dev
+  labels:
+    app: notas-app
+    env: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notas-app
+  template:
+    metadata:
+      labels:
+        app: notas-app
+        env: dev
+    spec:
+      initContainers:
+        - name: wait-for-mongo
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - "until nc -z mongodb-service 27017; do echo 'esperando mongo...'; sleep 2; done"
+      containers:
+        - name: notas-app
+          image: docker.io/dinotaurent/notas-java:1.0.1
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: notas-app-config
+            - secretRef:
+                name: notas-app-secret
+          resources:
+            requests:
+              cpu: "250m"
+              memory: 256Mi
+            limits:
+              cpu: "500m"
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            timeoutSeconds: 5
+---
+# ============================================
+# Service - Notas App
+# ============================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: notas-app-service
+  namespace: dev
+  labels:
+    app: notas-app
+    env: dev
+spec:
+  selector:
+    app: notas-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: http
