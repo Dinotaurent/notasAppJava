@@ -1,6 +1,8 @@
 spring:
   application:
     name: notas-app
+  mongodb:
+    uri: ${SPRING_DATA_MONGODB_URI}
 
 api:
   version: ${API_VERSION:v1}
